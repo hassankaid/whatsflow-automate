@@ -19,25 +19,45 @@ export const useAuth = () => {
     loading: true,
   });
 
-  useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (session?.user) {
-          // Fetch user role when session exists
-          const { data: roleData } = await supabase
-            .from('user_roles')
-            .select('role')
-            .eq('user_id', session.user.id)
-            .maybeSingle();
+  const fetchUserRole = async (userId: string) => {
+    try {
+      const { data: roleData, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .maybeSingle();
+      
+      if (error) {
+        console.error('Error fetching user role:', error);
+        return null;
+      }
+      
+      return roleData?.role || null;
+    } catch (error) {
+      console.error('Error in fetchUserRole:', error);
+      return null;
+    }
+  };
 
+  useEffect(() => {
+    let mounted = true;
+
+    const handleAuthStateChange = async (event: string, session: Session | null) => {
+      if (!mounted) return;
+
+      if (session?.user) {
+        const role = await fetchUserRole(session.user.id);
+        
+        if (mounted) {
           setAuthState({
             user: session.user,
             session,
-            role: roleData?.role || null,
+            role,
             loading: false,
           });
-        } else {
+        }
+      } else {
+        if (mounted) {
           setAuthState({
             user: null,
             session: null,
@@ -46,31 +66,20 @@ export const useAuth = () => {
           });
         }
       }
-    );
+    };
 
-    // THEN check for existing session
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthStateChange);
+
+    // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        // Fetch user role for existing session
-        supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', session.user.id)
-          .maybeSingle()
-          .then(({ data: roleData }) => {
-            setAuthState({
-              user: session.user,
-              session,
-              role: roleData?.role || null,
-              loading: false,
-            });
-          });
-      } else {
-        setAuthState(prev => ({ ...prev, loading: false }));
-      }
+      handleAuthStateChange('INITIAL_SESSION', session);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signUp = async (email: string, password: string, metadata: { full_name?: string; phone_number?: string } = {}) => {
