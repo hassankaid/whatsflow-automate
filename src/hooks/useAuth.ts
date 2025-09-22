@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -19,7 +19,14 @@ export const useAuth = () => {
     loading: true,
   });
 
-  const fetchUserRole = async (userId: string): Promise<AppRole> => {
+  const [roleCache, setRoleCache] = useState<Map<string, AppRole>>(new Map());
+
+  const fetchUserRole = useCallback(async (userId: string): Promise<AppRole> => {
+    // Check cache first
+    if (roleCache.has(userId)) {
+      return roleCache.get(userId)!;
+    }
+
     try {
       const { data: roleData, error } = await supabase
         .from('user_roles')
@@ -32,30 +39,41 @@ export const useAuth = () => {
         return null;
       }
       
-      return (roleData?.role as AppRole) || null;
+      const role = (roleData?.role as AppRole) || null;
+      
+      // Cache the result
+      setRoleCache(prev => new Map(prev).set(userId, role));
+      
+      return role;
     } catch (error) {
       console.error('Exception in fetchUserRole:', error);
       return null;
     }
-  };
+  }, [roleCache]);
 
   useEffect(() => {
     let mounted = true;
+    let roleTimeout: NodeJS.Timeout;
 
     const handleAuthStateChange = (event: string, session: Session | null) => {
       if (!mounted) return;
 
-      // Only synchronous state updates here
       if (session?.user) {
-        setAuthState({
+        // Set initial state immediately
+        setAuthState(prev => ({
+          ...prev,
           user: session.user,
           session,
-          role: null, // Will be set after async role fetch
           loading: false,
-        });
+        }));
 
-        // Defer Supabase calls with setTimeout
-        setTimeout(async () => {
+        // Clear any existing timeout
+        if (roleTimeout) {
+          clearTimeout(roleTimeout);
+        }
+
+        // Fetch role with debouncing
+        roleTimeout = setTimeout(async () => {
           if (mounted) {
             try {
               const role = await fetchUserRole(session.user.id);
@@ -69,7 +87,7 @@ export const useAuth = () => {
               }
             }
           }
-        }, 0);
+        }, 100); // 100ms debounce
       } else {
         setAuthState({
           user: null,
@@ -77,10 +95,14 @@ export const useAuth = () => {
           role: null,
           loading: false,
         });
+        // Clear cache when user logs out
+        setRoleCache(new Map());
       }
     };
 
     const initAuth = async () => {
+      if (!mounted) return;
+      
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         
@@ -102,7 +124,7 @@ export const useAuth = () => {
       }
     };
 
-    // Initialize and set up listener
+    // Initialize
     initAuth();
 
     // Set up auth change listener
@@ -110,9 +132,12 @@ export const useAuth = () => {
 
     return () => {
       mounted = false;
+      if (roleTimeout) {
+        clearTimeout(roleTimeout);
+      }
       subscription.unsubscribe();
     };
-  }, []);
+  }, [fetchUserRole]);
 
   const signUp = async (email: string, password: string, metadata: { full_name?: string; phone_number?: string } = {}) => {
     const redirectUrl = `${window.location.origin}/`;
@@ -137,6 +162,8 @@ export const useAuth = () => {
   };
 
   const signOut = async () => {
+    // Clear cache on sign out
+    setRoleCache(new Map());
     const { error } = await supabase.auth.signOut();
     return { error };
   };
@@ -145,6 +172,14 @@ export const useAuth = () => {
     const { error } = await supabase
       .from('user_roles')
       .insert({ user_id: userId, role });
+    
+    // Clear cache for this user
+    setRoleCache(prev => {
+      const newCache = new Map(prev);
+      newCache.delete(userId);
+      return newCache;
+    });
+    
     return { error };
   };
 
