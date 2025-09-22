@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -19,14 +19,7 @@ export const useAuth = () => {
     loading: true,
   });
 
-  const [roleCache, setRoleCache] = useState<Map<string, AppRole>>(new Map());
-
-  const fetchUserRole = useCallback(async (userId: string): Promise<AppRole> => {
-    // Check cache first
-    if (roleCache.has(userId)) {
-      return roleCache.get(userId)!;
-    }
-
+  const fetchUserRole = async (userId: string): Promise<AppRole> => {
     try {
       const { data: roleData, error } = await supabase
         .from('user_roles')
@@ -39,27 +32,20 @@ export const useAuth = () => {
         return null;
       }
       
-      const role = (roleData?.role as AppRole) || null;
-      
-      // Cache the result
-      setRoleCache(prev => new Map(prev).set(userId, role));
-      
-      return role;
+      return (roleData?.role as AppRole) || null;
     } catch (error) {
       console.error('Exception in fetchUserRole:', error);
       return null;
     }
-  }, [roleCache]);
+  };
 
   useEffect(() => {
     let mounted = true;
-    let roleTimeout: NodeJS.Timeout;
 
     const handleAuthStateChange = (event: string, session: Session | null) => {
       if (!mounted) return;
 
       if (session?.user) {
-        // Set initial state immediately
         setAuthState(prev => ({
           ...prev,
           user: session.user,
@@ -67,36 +53,28 @@ export const useAuth = () => {
           loading: false,
         }));
 
-        // Clear any existing timeout
-        if (roleTimeout) {
-          clearTimeout(roleTimeout);
-        }
-
-        // Fetch role with debouncing
-        roleTimeout = setTimeout(async () => {
-          if (mounted) {
-            try {
-              const role = await fetchUserRole(session.user.id);
-              if (mounted) {
-                setAuthState(prev => ({ ...prev, role }));
-              }
-            } catch (error) {
-              console.error('Error fetching user role:', error);
-              if (mounted) {
-                setAuthState(prev => ({ ...prev, role: null }));
-              }
+        // Fetch role separately
+        fetchUserRole(session.user.id)
+          .then(role => {
+            if (mounted) {
+              setAuthState(prev => ({ ...prev, role }));
             }
-          }
-        }, 100); // 100ms debounce
+          })
+          .catch(error => {
+            console.error('Error fetching role:', error);
+            if (mounted) {
+              setAuthState(prev => ({ ...prev, role: null }));
+            }
+          });
       } else {
-        setAuthState({
-          user: null,
-          session: null,
-          role: null,
-          loading: false,
-        });
-        // Clear cache when user logs out
-        setRoleCache(new Map());
+        if (mounted) {
+          setAuthState({
+            user: null,
+            session: null,
+            role: null,
+            loading: false,
+          });
+        }
       }
     };
 
@@ -132,12 +110,9 @@ export const useAuth = () => {
 
     return () => {
       mounted = false;
-      if (roleTimeout) {
-        clearTimeout(roleTimeout);
-      }
       subscription.unsubscribe();
     };
-  }, [fetchUserRole]);
+  }, []); // Empty dependency array
 
   const signUp = async (email: string, password: string, metadata: { full_name?: string; phone_number?: string } = {}) => {
     const redirectUrl = `${window.location.origin}/`;
@@ -162,8 +137,6 @@ export const useAuth = () => {
   };
 
   const signOut = async () => {
-    // Clear cache on sign out
-    setRoleCache(new Map());
     const { error } = await supabase.auth.signOut();
     return { error };
   };
@@ -172,14 +145,6 @@ export const useAuth = () => {
     const { error } = await supabase
       .from('user_roles')
       .insert({ user_id: userId, role });
-    
-    // Clear cache for this user
-    setRoleCache(prev => {
-      const newCache = new Map(prev);
-      newCache.delete(userId);
-      return newCache;
-    });
-    
     return { error };
   };
 
