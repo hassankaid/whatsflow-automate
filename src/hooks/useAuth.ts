@@ -42,41 +42,41 @@ export const useAuth = () => {
   useEffect(() => {
     let mounted = true;
 
-    const handleAuthStateChange = async (event: string, session: Session | null) => {
+    const handleAuthStateChange = (event: string, session: Session | null) => {
       if (!mounted) return;
 
-      try {
-        if (session?.user) {
-          const role = await fetchUserRole(session.user.id);
-          
+      // Only synchronous state updates here
+      if (session?.user) {
+        setAuthState({
+          user: session.user,
+          session,
+          role: null, // Will be set after async role fetch
+          loading: false,
+        });
+
+        // Defer Supabase calls with setTimeout
+        setTimeout(async () => {
           if (mounted) {
-            setAuthState({
-              user: session.user,
-              session,
-              role,
-              loading: false,
-            });
+            try {
+              const role = await fetchUserRole(session.user.id);
+              if (mounted) {
+                setAuthState(prev => ({ ...prev, role }));
+              }
+            } catch (error) {
+              console.error('Error fetching user role:', error);
+              if (mounted) {
+                setAuthState(prev => ({ ...prev, role: null }));
+              }
+            }
           }
-        } else {
-          if (mounted) {
-            setAuthState({
-              user: null,
-              session: null,
-              role: null,
-              loading: false,
-            });
-          }
-        }
-      } catch (error) {
-        console.error('Error in handleAuthStateChange:', error);
-        if (mounted) {
-          setAuthState({
-            user: null,
-            session: null,
-            role: null,
-            loading: false,
-          });
-        }
+        }, 0);
+      } else {
+        setAuthState({
+          user: null,
+          session: null,
+          role: null,
+          loading: false,
+        });
       }
     };
 
@@ -92,7 +92,7 @@ export const useAuth = () => {
           return;
         }
 
-        await handleAuthStateChange('INITIAL_SESSION', session);
+        handleAuthStateChange('INITIAL_SESSION', session);
 
       } catch (error) {
         console.error('Error in initAuth:', error);
