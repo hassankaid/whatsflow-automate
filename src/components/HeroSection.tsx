@@ -44,12 +44,12 @@ const HeroSection = () => {
           <div className="mb-6">
             <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full text-sm font-medium text-primary mb-6">
               <Zap className="h-4 w-4" />
-              Automatisation WhatsApp Professional
+              Automatisation FlowMessage Professional
             </div>
             <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
               Automatisez votre
-              <span className="bg-gradient-to-r from-primary to-whatsapp-light bg-clip-text text-transparent block">
-                WhatsApp Business
+              <span className="bg-gradient-to-r from-flowmessage to-flowmessage-light bg-clip-text text-transparent block">
+                communication WhatsApp
               </span>
             </h1>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
@@ -59,7 +59,7 @@ const HeroSection = () => {
           </div>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-            <Button size="lg" className="bg-gradient-to-r from-primary to-whatsapp-light hover:from-primary/90 hover:to-whatsapp-light/90 text-white px-8 py-6 text-lg font-semibold shadow-lg hover:shadow-xl transition-all">
+            <Button size="lg" className="bg-gradient-to-r from-flowmessage to-flowmessage-light hover:from-flowmessage/90 hover:to-flowmessage-light/90 text-white px-8 py-6 text-lg font-semibold shadow-lg hover:shadow-xl transition-all">
               Commencer gratuitement
             </Button>
             <Button variant="outline" size="lg" className="px-8 py-6 text-lg border-primary/20 hover:border-primary/40">
@@ -95,7 +95,7 @@ const HeroSection = () => {
               <p className="text-muted-foreground mb-6 text-lg">
                 Rejoignez des milliers d'entrepreneurs qui font confiance à notre plateforme
               </p>
-              <Button size="lg" className="bg-gradient-to-r from-primary to-whatsapp-light hover:from-primary/90 hover:to-whatsapp-light/90 text-white px-8 py-4 text-lg font-semibold">
+              <Button size="lg" className="bg-gradient-to-r from-flowmessage to-flowmessage-light hover:from-flowmessage/90 hover:to-flowmessage-light/90 text-white px-8 py-4 text-lg font-semibold">
                 Démarrer maintenant
               </Button>
             </CardContent>

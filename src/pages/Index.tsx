@@ -51,10 +51,10 @@ const Index = () => {
         <div className="container mx-auto px-6">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-primary to-whatsapp-light rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-gradient-to-r from-flowmessage to-flowmessage-light rounded-lg flex items-center justify-center">
                 <MessageSquare className="h-4 w-4 text-white" />
               </div>
-              <span className="font-bold text-lg">WhatsApp Automation</span>
+              <span className="font-bold text-lg">FlowMessage</span>
             </div>
             
             <div className="flex items-center gap-2">
@@ -66,7 +66,7 @@ const Index = () => {
                   onClick={() => setCurrentView(item.id as any)}
                   className={`flex items-center gap-2 ${
                     currentView === item.id 
-                      ? "bg-gradient-to-r from-primary to-whatsapp-light text-white" 
+                      ? "bg-gradient-to-r from-flowmessage to-flowmessage-light text-white" 
                       : ""
                   }`}
                 >

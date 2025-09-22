@@ -36,18 +36,18 @@ All colors MUST be HSL.
     --input: 240 3.7% 15.9%;
     --ring: 142 76% 36%;
 
-    --whatsapp: 142 76% 36%;
-    --whatsapp-dark: 142 76% 30%;
-    --whatsapp-light: 142 76% 42%;
+    --flowmessage: 195 100% 50%;
+    --flowmessage-dark: 195 100% 45%;
+    --flowmessage-light: 328 100% 54%;
     
     --success: 142 76% 36%;
     --success-foreground: 355 7% 97%;
     
-    --gradient-primary: linear-gradient(135deg, hsl(142 76% 36%), hsl(142 76% 42%));
+    --gradient-primary: linear-gradient(135deg, hsl(195 100% 50%), hsl(328 100% 54%));
     --gradient-secondary: linear-gradient(135deg, hsl(240 3.7% 15.9%), hsl(240 3.7% 20%));
-    --gradient-hero: linear-gradient(135deg, hsl(142 76% 36%), hsl(197 71% 52%));
+    --gradient-hero: linear-gradient(135deg, hsl(195 100% 50%), hsl(328 100% 54%));
     
-    --shadow-glow: 0 0 40px hsl(142 76% 36% / 0.3);
+    --shadow-glow: 0 0 40px hsl(195 100% 50% / 0.3);
     --shadow-elegant: 0 10px 30px -10px hsl(0 0% 0% / 0.3);
 
     --radius: 0.5rem;

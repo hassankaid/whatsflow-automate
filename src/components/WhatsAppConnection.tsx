@@ -73,7 +73,7 @@ const WhatsAppConnection = () => {
                     
                     <Button 
                       onClick={mockConnect}
-                      className="w-full bg-gradient-to-r from-primary to-whatsapp-light"
+                      className="w-full bg-gradient-to-r from-flowmessage to-flowmessage-light"
                     >
                       Simuler la connexion
                     </Button>

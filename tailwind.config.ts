@@ -47,10 +47,10 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        whatsapp: {
-          DEFAULT: "hsl(var(--whatsapp))",
-          dark: "hsl(var(--whatsapp-dark))",
-          light: "hsl(var(--whatsapp-light))",
+        flowmessage: {
+          DEFAULT: "hsl(var(--flowmessage))",
+          dark: "hsl(var(--flowmessage-dark))",
+          light: "hsl(var(--flowmessage-light))",
         },
         success: {
           DEFAULT: "hsl(var(--success))",
