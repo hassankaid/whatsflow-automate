@@ -37,28 +37,21 @@ const HeroSection = () => {
   ];
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      {/* Animated background elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-r from-flowmessage/20 to-flowmessage-light/20 rounded-full blur-3xl animate-float"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-r from-flowmessage-light/20 to-flowmessage/20 rounded-full blur-3xl animate-float" style={{animationDelay: '3s'}}></div>
-      </div>
-
+    <div className="min-h-screen">
       {/* Hero Section */}
-      <div className="container mx-auto px-6 pt-24 pb-20 relative z-10">
+      <div className="container mx-auto px-6 pt-24 pb-20">
         <div className="text-center mb-20">
           <div className="mb-8">
-            <div className="inline-flex items-center gap-3 glass px-6 py-3 rounded-full text-sm font-medium text-flowmessage mb-8 animate-float">
+            <div className="inline-flex items-center gap-3 glass px-6 py-3 rounded-full text-sm font-medium text-flowmessage mb-8">
               <Zap className="h-5 w-5" />
               Automatisation FlowMessage Professional
-              <div className="w-2 h-2 bg-flowmessage rounded-full animate-pulse"></div>
             </div>
             <h1 className="text-6xl md:text-7xl font-bold mb-8 leading-tight">
-              <span className="bg-gradient-to-r from-white via-gray-100 to-gray-300 bg-clip-text text-transparent">
+              <span className="text-white">
                 Automatisez votre
               </span>
               <br />
-              <span className="bg-gradient-to-r from-flowmessage via-flowmessage-light to-flowmessage bg-clip-text text-transparent animate-glow">
+              <span className="bg-gradient-to-r from-flowmessage to-flowmessage-light bg-clip-text text-transparent">
                 communication WhatsApp
               </span>
             </h1>
@@ -69,11 +62,10 @@ const HeroSection = () => {
           </div>
           
           <div className="flex flex-col sm:flex-row gap-6 justify-center mb-20">
-            <Button size="lg" className="bg-gradient-to-r from-flowmessage to-flowmessage-light hover:from-flowmessage/90 hover:to-flowmessage-light/90 text-white px-10 py-7 text-lg font-semibold shadow-2xl hover:shadow-flowmessage/25 transition-all duration-300 animate-glow">
+            <Button size="lg" className="bg-gradient-to-r from-flowmessage to-flowmessage-light hover:from-flowmessage/90 hover:to-flowmessage-light/90 text-white px-10 py-7 text-lg font-semibold transition-all duration-200">
               Commencer gratuitement
-              <div className="absolute inset-0 bg-gradient-to-r from-flowmessage to-flowmessage-light rounded-lg blur-lg opacity-30 -z-10"></div>
             </Button>
-            <Button variant="outline" size="lg" className="px-10 py-7 text-lg border-flowmessage/30 text-flowmessage hover:glass hover:border-flowmessage/50 transition-all duration-300">
+            <Button variant="outline" size="lg" className="px-10 py-7 text-lg border-flowmessage/30 text-flowmessage hover:bg-white/5 hover:border-flowmessage/50 transition-all duration-200">
               Voir la démonstration
             </Button>
           </div>
@@ -84,18 +76,17 @@ const HeroSection = () => {
           {features.map((feature, index) => (
             <div 
               key={index} 
-              className="glass-card p-8 rounded-2xl hover:shadow-2xl hover:shadow-flowmessage/10 transition-all duration-500 group hover:-translate-y-2"
-              style={{animationDelay: `${index * 100}ms`}}
+              className="glass p-8 rounded-2xl hover:bg-white/10 transition-all duration-300 group"
             >
               <div className="flex items-start gap-6">
-                <div className="p-4 bg-gradient-to-r from-flowmessage/20 to-flowmessage-light/20 rounded-2xl text-flowmessage group-hover:from-flowmessage/30 group-hover:to-flowmessage-light/30 transition-all duration-300 group-hover:scale-110">
+                <div className="p-4 bg-gradient-to-r from-flowmessage/20 to-flowmessage-light/20 rounded-2xl text-flowmessage transition-all duration-200">
                   {feature.icon}
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-bold text-xl mb-3 text-white group-hover:text-flowmessage transition-colors duration-300">
+                  <h3 className="font-bold text-xl mb-3 text-white">
                     {feature.title}
                   </h3>
-                  <p className="text-gray-400 leading-relaxed group-hover:text-gray-300 transition-colors duration-300">
+                  <p className="text-gray-400 leading-relaxed">
                     {feature.description}
                   </p>
                 </div>
@@ -106,20 +97,16 @@ const HeroSection = () => {
 
         {/* CTA Section */}
         <div className="text-center">
-          <div className="glass-card max-w-5xl mx-auto p-12 rounded-3xl relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-flowmessage/5 to-flowmessage-light/5 rounded-3xl"></div>
-            <div className="relative z-10">
-              <h2 className="text-4xl font-bold mb-6 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-                Prêt à révolutionner votre communication ?
-              </h2>
-              <p className="text-gray-400 mb-8 text-xl max-w-2xl mx-auto">
-                Rejoignez des milliers d'entrepreneurs qui font confiance à FlowMessage
-              </p>
-              <Button size="lg" className="bg-gradient-to-r from-flowmessage to-flowmessage-light hover:from-flowmessage/90 hover:to-flowmessage-light/90 text-white px-12 py-6 text-xl font-semibold shadow-2xl hover:shadow-flowmessage/25 transition-all duration-300 animate-glow">
-                Démarrer maintenant
-                <div className="absolute inset-0 bg-gradient-to-r from-flowmessage to-flowmessage-light rounded-lg blur-lg opacity-40 -z-10"></div>
-              </Button>
-            </div>
+          <div className="glass max-w-5xl mx-auto p-12 rounded-3xl">
+            <h2 className="text-4xl font-bold mb-6 text-white">
+              Prêt à révolutionner votre communication ?
+            </h2>
+            <p className="text-gray-400 mb-8 text-xl max-w-2xl mx-auto">
+              Rejoignez des milliers d'entrepreneurs qui font confiance à FlowMessage
+            </p>
+            <Button size="lg" className="bg-gradient-to-r from-flowmessage to-flowmessage-light hover:from-flowmessage/90 hover:to-flowmessage-light/90 text-white px-12 py-6 text-xl font-semibold transition-all duration-200">
+              Démarrer maintenant
+            </Button>
           </div>
         </div>
       </div>

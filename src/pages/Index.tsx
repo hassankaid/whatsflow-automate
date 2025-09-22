@@ -51,9 +51,8 @@ const Index = () => {
         <div className="container mx-auto px-6">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
-              <div className="relative w-10 h-10 bg-gradient-to-r from-flowmessage to-flowmessage-light rounded-xl flex items-center justify-center shadow-lg animate-glow">
+              <div className="w-10 h-10 bg-gradient-to-r from-flowmessage to-flowmessage-light rounded-xl flex items-center justify-center">
                 <MessageSquare className="h-5 w-5 text-white" />
-                <div className="absolute inset-0 bg-gradient-to-r from-flowmessage to-flowmessage-light rounded-xl blur-sm opacity-50 -z-10"></div>
               </div>
               <span className="font-bold text-xl bg-gradient-to-r from-flowmessage to-flowmessage-light bg-clip-text text-transparent">
                 FlowMessage
@@ -67,10 +66,10 @@ const Index = () => {
                   variant={currentView === item.id ? "default" : "ghost"}
                   size="sm"
                   onClick={() => setCurrentView(item.id as any)}
-                  className={`flex items-center gap-2 transition-all duration-300 ${
+                  className={`flex items-center gap-2 transition-all duration-200 ${
                     currentView === item.id 
-                      ? "bg-gradient-to-r from-flowmessage to-flowmessage-light text-white shadow-lg animate-glow" 
-                      : "hover:glass hover:text-flowmessage"
+                      ? "bg-gradient-to-r from-flowmessage to-flowmessage-light text-white" 
+                      : "hover:bg-white/5 hover:text-flowmessage"
                   }`}
                 >
                   {item.icon}
