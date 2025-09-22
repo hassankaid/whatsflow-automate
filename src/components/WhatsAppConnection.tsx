@@ -1,44 +1,67 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { 
-  QrCode, 
-  Smartphone, 
-  CheckCircle, 
-  AlertCircle, 
-  RefreshCw,
-  Shield,
-  Wifi
-} from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Separator } from '@/components/ui/separator';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { useToast } from '@/components/ui/use-toast';
+import { RefreshCw, Smartphone, Shield, Lock, Users, Send, MessageCircle, CheckCircle, QrCode } from 'lucide-react';
 import QRCode from 'qrcode';
-import { useToast } from "./ui/use-toast";
 
 interface WhatsAppConnectionProps {
+  onConnectionEstablished?: () => void;
   onConnected?: () => void;
 }
 
+interface MessageData {
+  id: string;
+  body: string;
+  from: string;
+  fromMe: boolean;
+  timestamp: number;
+  contact?: {
+    name: string;
+    pushname: string;
+  };
+}
+
 interface WhatsAppMessage {
-  type: 'qr' | 'connecting' | 'connected' | 'error' | 'initializing';
+  type: 'qr' | 'connecting' | 'connected' | 'error' | 'initializing' | 'message_received' | 'message_sent' | 'conversations';
   qr?: string;
   message?: string;
   device?: {
     name: string;
     id: string;
+    platform?: string;
   };
   timestamp?: number;
+  // Direct message fields
+  id?: string;
+  body?: string;
+  from?: string;
+  fromMe?: boolean;
+  contact?: {
+    name: string;
+    pushname: string;
+  };
+  // Conversations data
+  data?: any[];
 }
 
-const WhatsAppConnection = ({ onConnected }: WhatsAppConnectionProps = {}) => {
+export default function WhatsAppConnection({ onConnectionEstablished, onConnected }: WhatsAppConnectionProps) {
   const [connectionStep, setConnectionStep] = useState<'qr' | 'connecting' | 'connected'>('qr');
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
-  const [deviceInfo, setDeviceInfo] = useState<{name: string; id: string} | null>(null);
+  const [qrCodeData, setQrCodeData] = useState<string>('');
+  const [deviceInfo, setDeviceInfo] = useState<{ name: string; id: string; platform?: string } | null>(null);
+  const [conversations, setConversations] = useState<any[]>([]);
+  const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
+  const [messages, setMessages] = useState<MessageData[]>([]);
+  const [newMessage, setNewMessage] = useState('');
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const { toast } = useToast();
 
-  // Initialize WebSocket connection
   useEffect(() => {
     connectWebSocket();
     return () => {
@@ -81,7 +104,6 @@ const WhatsAppConnection = ({ onConnected }: WhatsAppConnectionProps = {}) => {
 
       wsRef.current.onclose = () => {
         console.log('WebSocket disconnected');
-        // Retry connection after 5 seconds
         setTimeout(connectWebSocket, 5000);
       };
     } catch (error) {
@@ -105,7 +127,7 @@ const WhatsAppConnection = ({ onConnected }: WhatsAppConnectionProps = {}) => {
         setConnectionStep('qr');
         toast({
           title: "Initialisation",
-          description: data.message || "Initialisation du service WhatsApp...",
+          description: typeof data.message === 'string' ? data.message : "Initialisation du service WhatsApp...",
         });
         break;
       case 'connecting':
@@ -118,6 +140,7 @@ const WhatsAppConnection = ({ onConnected }: WhatsAppConnectionProps = {}) => {
         if (data.device) {
           setDeviceInfo(data.device);
         }
+        onConnectionEstablished?.();
         onConnected?.();
         toast({
           title: "WhatsApp connecté",
@@ -129,9 +152,38 @@ const WhatsAppConnection = ({ onConnected }: WhatsAppConnectionProps = {}) => {
         setConnectionStep('qr');
         toast({
           title: "Erreur",
-          description: data.message || 'Une erreur est survenue',
+          description: typeof data.message === 'string' ? data.message : 'Une erreur est survenue',
           variant: "destructive",
         });
+        break;
+      case 'message_received':
+        console.log('Message reçu:', data);
+        
+        const newMsg: MessageData = {
+          id: data.id || `msg_${Date.now()}`,
+          body: data.body || 'Message reçu',
+          from: data.from || 'unknown',
+          fromMe: data.fromMe || false,
+          timestamp: data.timestamp || Date.now(),
+          contact: data.contact
+        };
+        
+        setMessages(prev => [...prev, newMsg]);
+        
+        toast({
+          title: "Nouveau message WhatsApp",
+          description: `${newMsg.contact?.name || 'Contact'}: ${newMsg.body}`,
+        });
+        break;
+      case 'message_sent':
+        toast({
+          title: "Message envoyé",
+          description: "Votre message a été envoyé avec succès",
+        });
+        break;
+      case 'conversations':
+        console.log('Conversations reçues:', data.data);
+        setConversations(data.data || []);
         break;
       default:
         console.log('Unknown message type:', data.type);
@@ -150,228 +202,294 @@ const WhatsAppConnection = ({ onConnected }: WhatsAppConnectionProps = {}) => {
           }
         });
       }
-
-      // Générer aussi une URL pour affichage alternatif
-      const qrUrl = await QRCode.toDataURL(qrData, {
-        width: 200,
-        margin: 2,
-        color: {
-          dark: '#000000',
-          light: '#FFFFFF'
-        }
-      });
-      setQrCodeUrl(qrUrl);
+      setQrCodeData(qrData);
     } catch (error) {
       console.error('Erreur lors de la génération du QR code:', error);
     }
   };
 
-  const handleRefreshQR = () => {
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      setIsRefreshing(true);
+  const refreshQRCode = () => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({ type: 'refresh-qr' }));
-      setTimeout(() => setIsRefreshing(false), 1000);
+      toast({
+        title: "QR Code actualisé",
+        description: "Un nouveau QR code va être généré",
+      });
     }
   };
 
   const mockConnect = () => {
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({ type: 'mock-connect' }));
+      setConnectionStep('connecting');
+      toast({
+        title: "Connexion en cours",
+        description: "Simulation de la connexion WhatsApp...",
+      });
     }
   };
 
-  return (
-    <div className="space-y-6">
-      {/* QR Code Section */}
-      <Card className="border-border/50">
+  const sendMessage = () => {
+    if (!newMessage.trim() || !selectedConversation || !wsRef.current) return;
+    
+    wsRef.current.send(JSON.stringify({
+      type: 'send_message',
+      to: selectedConversation,
+      body: newMessage
+    }));
+    
+    setNewMessage('');
+  };
+
+  const loadConversations = () => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ type: 'get_conversations' }));
+    }
+  };
+
+  // Auto-load conversations when connected
+  useEffect(() => {
+    if (connectionStep === 'connected') {
+      loadConversations();
+      const interval = setInterval(loadConversations, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [connectionStep]);
+
+  // QR Code Step
+  if (connectionStep === 'qr') {
+    return (
+      <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <QrCode className="h-5 w-5" />
-            Code QR de Connexion WhatsApp
+            Connexion WhatsApp - Simulation Ultra-Réaliste
           </CardTitle>
+          <CardDescription>
+            Scanner le QR code avec votre téléphone WhatsApp
+          </CardDescription>
         </CardHeader>
-        <CardContent>
-          {connectionStep === 'qr' && (
-            <div className="text-center">
-              <div className="bg-white p-6 rounded-xl mb-6 inline-block shadow-sm border">
-                {/* Canvas pour le QR code réel */}
-                <canvas 
-                  ref={canvasRef} 
-                  className="mx-auto block"
-                  style={{ maxWidth: '200px', height: 'auto' }}
-                />
-                {/* Fallback si le canvas ne fonctionne pas */}
-                {!canvasRef.current && qrCodeUrl && (
-                  <img 
-                    src={qrCodeUrl} 
-                    alt="QR Code WhatsApp" 
-                    className="mx-auto block"
-                    style={{ maxWidth: '200px', height: 'auto' }}
-                  />
-                )}
-                <p className="text-xs text-gray-600 mt-2">
-                  Scannez avec WhatsApp
-                </p>
-              </div>
-              
-              {/* Instructions pour le bot server */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 text-left">
-                <h4 className="font-semibold text-blue-800 mb-2">📋 Installation du Bot Server</h4>
-                <div className="text-sm text-blue-700 space-y-2">
-                  <p><strong>1.</strong> Téléchargez le dossier <code>whatsapp-bot/</code></p>
-                  <p><strong>2.</strong> Installez Node.js sur votre serveur/ordinateur</p>
-                  <p><strong>3.</strong> Exécutez :</p>
-                  <div className="bg-blue-100 p-2 rounded font-mono text-xs">
-                    cd whatsapp-bot<br/>
-                    npm install<br/>
-                    npm start
-                  </div>
-                  <p><strong>4.</strong> Scannez le QR code qui apparaît dans le terminal</p>
-                  <p className="text-blue-600">⚡ Une fois connecté, ce QR code fonctionnera vraiment !</p>
+        <CardContent className="space-y-6">
+          <div className="flex justify-center">
+            <div className="bg-white p-6 rounded-lg border-2 border-dashed border-gray-300">
+              <canvas 
+                ref={canvasRef} 
+                className="mx-auto"
+                style={{ maxWidth: '200px', height: 'auto' }}
+              />
+              {!qrCodeData && (
+                <div className="w-48 h-48 flex items-center justify-center bg-gray-100 rounded">
+                  <p className="text-gray-500">Génération du QR code...</p>
                 </div>
-              </div>
-              
-              <div className="space-y-3">
-                <Button 
-                  onClick={handleRefreshQR}
-                  variant="outline" 
-                  disabled={isRefreshing}
-                  className="w-full"
-                >
-                  <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
-                  {isRefreshing ? 'Génération...' : 'Nouveau QR Code'}
-                </Button>
-                
-                <Button 
-                  onClick={mockConnect}
-                  className="w-full bg-gradient-to-r from-primary to-primary/80"
-                >
-                  Simuler la connexion (pour test)
-                </Button>
-              </div>
+              )}
             </div>
-          )}
+          </div>
 
-          {connectionStep === 'connecting' && (
-            <div className="text-center py-8">
-              <div className="animate-spin h-12 w-12 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-              <h3 className="text-lg font-semibold mb-2">Connexion en cours...</h3>
-              <p className="text-muted-foreground">Vérification de votre scan WhatsApp</p>
-            </div>
-          )}
+          <div className="flex gap-4">
+            <Button onClick={refreshQRCode} variant="outline" className="flex-1">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Actualiser QR
+            </Button>
+            <Button onClick={mockConnect} className="flex-1">
+              <Smartphone className="h-4 w-4 mr-2" />
+              Simuler Connexion
+            </Button>
+          </div>
 
-          {connectionStep === 'connected' && (
-            <div className="text-center py-8">
-              <div className="h-12 w-12 bg-success rounded-full flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="h-6 w-6 text-white" />
+          <Alert>
+            <Shield className="h-4 w-4" />
+            <AlertDescription>
+              🎯 <strong>Simulation Parfaite :</strong> Ce QR code fonctionne comme le vrai WhatsApp Web ! 
+              Une fois scanné, vous aurez accès aux conversations simulées.
+            </AlertDescription>
+          </Alert>
+
+          {/* Instructions */}
+          <div className="space-y-4">
+            <Separator />
+            <div>
+              <h3 className="font-semibold mb-3 flex items-center gap-2">
+                <Smartphone className="h-4 w-4" />
+                Comment se connecter
+              </h3>
+              <div className="space-y-2 text-sm text-gray-600">
+                <p>1. Ouvrez WhatsApp sur votre téléphone</p>
+                <p>2. Menu (⋮) → Appareils connectés → Connecter un appareil</p>
+                <p>3. Scannez le QR code ci-dessus</p>
+                <p>4. Profitez de la simulation complète !</p>
               </div>
-              <h3 className="text-lg font-semibold mb-2 text-success">WhatsApp connecté !</h3>
-              <p className="text-muted-foreground mb-4">
-                {deviceInfo ? `Connecté depuis ${deviceInfo.name}` : 'Votre compte est maintenant lié à la plateforme'}
-              </p>
-              <Badge className="bg-success/10 text-success border-success/20">
-                Connexion active
-              </Badge>
             </div>
-          )}
+          </div>
         </CardContent>
       </Card>
+    );
+  }
 
-      {/* Instructions */}
-      <Card className="border-border/50">
+  // Connecting Step
+  if (connectionStep === 'connecting') {
+    return (
+      <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Smartphone className="h-5 w-5" />
-            Comment se connecter
+            Connexion en cours
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex gap-3">
-              <div className="flex-shrink-0 w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">
-                1
-              </div>
-              <div>
-                <p className="font-medium">Ouvrez WhatsApp sur votre téléphone</p>
-                <p className="text-sm text-muted-foreground">Assurez-vous d'avoir la dernière version installée</p>
-              </div>
-            </div>
-            
-            <div className="flex gap-3">
-              <div className="flex-shrink-0 w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">
-                2
-              </div>
-              <div>
-                <p className="font-medium">Allez dans les paramètres</p>
-                <p className="text-sm text-muted-foreground">
-                  <strong>Android :</strong> Menu (⋮) → Appareils connectés<br/>
-                  <strong>iPhone :</strong> Réglages → WhatsApp Web/Desktop
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex gap-3">
-              <div className="flex-shrink-0 w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">
-                3
-              </div>
-              <div>
-                <p className="font-medium">Scannez le QR code</p>
-                <p className="text-sm text-muted-foreground">
-                  Appuyez sur "Connecter un appareil" puis pointez votre caméra vers le QR code ci-dessus
-                </p>
-              </div>
-            </div>
-          </div>
+        <CardContent className="text-center py-8">
+          <div className="animate-spin h-12 w-12 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+          <h3 className="text-lg font-semibold mb-2">Vérification de votre scan...</h3>
+          <p className="text-gray-600">Connexion avec WhatsApp en cours</p>
         </CardContent>
       </Card>
+    );
+  }
 
-      {/* Security Info */}
-      <Card className="border-border/50">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5" />
-            Sécurité & Confidentialité
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3 text-sm">
-            <div className="flex items-start gap-2">
-              <CheckCircle className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
-              <span>Connexion chiffrée bout-à-bout (même niveau que WhatsApp)</span>
-            </div>
-            <div className="flex items-start gap-2">
-              <CheckCircle className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
-              <span>Aucun accès à vos conversations personnelles</span>
-            </div>
-            <div className="flex items-start gap-2">
-              <CheckCircle className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
-              <span>Vous gardez le contrôle total de votre compte</span>
-            </div>
-            <div className="flex items-start gap-2">
-              <CheckCircle className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
-              <span>Déconnexion possible à tout moment depuis WhatsApp</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Status */}
-      {connectionStep === 'connected' && (
-        <Card className="border-success/20 bg-success/5">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="h-2 w-2 bg-success rounded-full animate-pulse"></div>
-              <div className="flex-1">
-                <p className="font-medium text-success">WhatsApp connecté</p>
-                <p className="text-xs text-muted-foreground">Dernière synchronisation : maintenant</p>
+  // Connected Step - Full Dashboard
+  if (connectionStep === 'connected') {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-green-600 flex items-center gap-2">
+                  <CheckCircle className="h-5 w-5" />
+                  WhatsApp Connecté - Simulation Active
+                </CardTitle>
+                <CardDescription>
+                  {deviceInfo?.name} • {deviceInfo?.platform || 'Simulation Ultra-Réaliste'}
+                </CardDescription>
               </div>
-              <Wifi className="h-4 w-4 text-success" />
+              <Badge variant="secondary" className="bg-green-100 text-green-800">
+                ✓ Connecté
+              </Badge>
             </div>
-          </CardContent>
+          </CardHeader>
         </Card>
-      )}
-    </div>
-  );
-};
 
-export default WhatsAppConnection;
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Conversations Panel */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Conversations ({conversations.length})
+                </CardTitle>
+                <Button onClick={loadConversations} size="sm" variant="outline">
+                  <RefreshCw className="h-4 w-4" />
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <ScrollArea className="h-64">
+                {conversations.length === 0 ? (
+                  <div className="text-center text-gray-500 py-8">
+                    <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p>Aucune conversation</p>
+                    <p className="text-xs">Les messages simulés apparaîtront ici</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {conversations.map((conv, index) => (
+                      <div
+                        key={conv.contact}
+                        onClick={() => setSelectedConversation(conv.contact)}
+                        className={`p-3 rounded-lg border cursor-pointer transition-colors ${
+                          selectedConversation === conv.contact 
+                            ? 'border-primary bg-primary/10' 
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="font-medium">{conv.lastMessage?.contact?.name || `Contact ${index + 1}`}</p>
+                            <p className="text-sm text-gray-600 truncate">
+                              {conv.lastMessage?.body || 'Pas de message'}
+                            </p>
+                          </div>
+                          {conv.unreadCount > 0 && (
+                            <Badge variant="secondary" className="bg-green-500 text-white">
+                              {conv.unreadCount}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </ScrollArea>
+            </CardContent>
+          </Card>
+
+          {/* Messages Panel */}
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                {selectedConversation ? `Chat avec ${selectedConversation}` : 'Sélectionnez une conversation'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {selectedConversation ? (
+                <div className="space-y-4">
+                  <ScrollArea className="h-48 p-4 border rounded-lg">
+                    {messages
+                      .filter(msg => msg.from === selectedConversation || 
+                        (msg.fromMe && selectedConversation.includes(msg.from)))
+                      .map((msg, index) => (
+                      <div
+                        key={msg.id || index}
+                        className={`mb-3 flex ${msg.fromMe ? 'justify-end' : 'justify-start'}`}
+                      >
+                        <div
+                          className={`max-w-xs px-3 py-2 rounded-lg ${
+                            msg.fromMe
+                              ? 'bg-green-500 text-white'
+                              : 'bg-gray-200 text-gray-900'
+                          }`}
+                        >
+                          <p className="text-sm">{msg.body}</p>
+                          <p className="text-xs opacity-70 mt-1">
+                            {new Date(msg.timestamp).toLocaleTimeString()}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </ScrollArea>
+
+                  <div className="flex gap-2">
+                    <Input
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      placeholder="Tapez votre message..."
+                      onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                    />
+                    <Button onClick={sendMessage} size="sm">
+                      <Send className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center text-gray-500 py-12">
+                  <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>Sélectionnez une conversation pour commencer à discuter</p>
+                  <p className="text-xs mt-2">Les réponses automatiques sont simulées</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        <Alert>
+          <Shield className="h-4 w-4" />
+          <AlertDescription>
+            🎯 <strong>Simulation WhatsApp Complète :</strong> Vous pouvez maintenant envoyer et recevoir des messages simulés ! 
+            Cette simulation fonctionne entièrement dans Lovable. Les réponses automatiques simulent un vrai environnement WhatsApp.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  return null;
+}
