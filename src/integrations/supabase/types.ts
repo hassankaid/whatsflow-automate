@@ -81,6 +81,8 @@ export type Database = {
           id: string
           industry: string | null
           notes: string | null
+          onboarded_at: string | null
+          onboarding_status: string | null
           updated_at: string | null
           user_id: string
         }
@@ -91,6 +93,8 @@ export type Database = {
           id?: string
           industry?: string | null
           notes?: string | null
+          onboarded_at?: string | null
+          onboarding_status?: string | null
           updated_at?: string | null
           user_id: string
         }
@@ -101,6 +105,8 @@ export type Database = {
           id?: string
           industry?: string | null
           notes?: string | null
+          onboarded_at?: string | null
+          onboarding_status?: string | null
           updated_at?: string | null
           user_id?: string
         }
@@ -195,6 +201,50 @@ export type Database = {
             columns: ["whatsapp_connection_id"]
             isOneToOne: false
             referencedRelation: "whatsapp_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      onboarding_tokens: {
+        Row: {
+          client_data: Json | null
+          client_id: string | null
+          created_at: string
+          created_by: string
+          expires_at: string
+          id: string
+          token: string
+          updated_at: string
+          used_at: string | null
+        }
+        Insert: {
+          client_data?: Json | null
+          client_id?: string | null
+          created_at?: string
+          created_by: string
+          expires_at: string
+          id?: string
+          token: string
+          updated_at?: string
+          used_at?: string | null
+        }
+        Update: {
+          client_data?: Json | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string
+          expires_at?: string
+          id?: string
+          token?: string
+          updated_at?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onboarding_tokens_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]
@@ -299,6 +349,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_onboarding_token: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_user_role: {
         Args: { user_uuid: string }
         Returns: Database["public"]["Enums"]["app_role"]
@@ -306,6 +360,10 @@ export type Database = {
       is_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
+      }
+      use_onboarding_token: {
+        Args: { token_input: string }
+        Returns: string
       }
     }
     Enums: {
