@@ -21,6 +21,7 @@ export const useAuth = () => {
 
   const fetchUserRole = async (userId: string) => {
     try {
+      console.log('Fetching role for user:', userId);
       const { data: roleData, error } = await supabase
         .from('user_roles')
         .select('role')
@@ -32,6 +33,7 @@ export const useAuth = () => {
         return null;
       }
       
+      console.log('Role data:', roleData);
       return roleData?.role || null;
     } catch (error) {
       console.error('Error in fetchUserRole:', error);
@@ -43,12 +45,15 @@ export const useAuth = () => {
     let mounted = true;
 
     const handleAuthStateChange = async (event: string, session: Session | null) => {
+      console.log('Auth state change:', event, session?.user?.id);
+      
       if (!mounted) return;
 
       if (session?.user) {
         const role = await fetchUserRole(session.user.id);
         
         if (mounted) {
+          console.log('Setting auth state with role:', role);
           setAuthState({
             user: session.user,
             session,
@@ -58,6 +63,7 @@ export const useAuth = () => {
         }
       } else {
         if (mounted) {
+          console.log('Setting auth state to null');
           setAuthState({
             user: null,
             session: null,
@@ -68,17 +74,39 @@ export const useAuth = () => {
       }
     };
 
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthStateChange);
+    // Check for existing session first
+    const initializeAuth = async () => {
+      try {
+        console.log('Initializing auth...');
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Error getting session:', error);
+          setAuthState(prev => ({ ...prev, loading: false }));
+          return;
+        }
 
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      handleAuthStateChange('INITIAL_SESSION', session);
-    });
+        await handleAuthStateChange('INITIAL_SESSION', session);
+        
+        // Set up auth state listener after initial session check
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthStateChange);
+        
+        return () => {
+          mounted = false;
+          subscription.unsubscribe();
+        };
+      } catch (error) {
+        console.error('Error in initializeAuth:', error);
+        if (mounted) {
+          setAuthState(prev => ({ ...prev, loading: false }));
+        }
+      }
+    };
+
+    initializeAuth();
 
     return () => {
       mounted = false;
-      subscription.unsubscribe();
     };
   }, []);
 
