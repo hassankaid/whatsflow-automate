@@ -17,12 +17,8 @@ serve(async (req) => {
 
   const url = new URL(req.url);
   
-  // WebSocket endpoint for real-time updates
-  if (url.pathname === '/ws') {
-    if (req.headers.get('upgrade') !== 'websocket') {
-      return new Response('Expected websocket', { status: 400 });
-    }
-
+  // WebSocket endpoint for real-time updates (root path)
+  if (req.headers.get('upgrade') === 'websocket') {
     const { socket, response } = Deno.upgradeWebSocket(req);
     const connectionId = crypto.randomUUID();
     

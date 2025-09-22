@@ -50,7 +50,7 @@ const WhatsAppConnection = ({ onConnected }: WhatsAppConnectionProps = {}) => {
 
   const connectWebSocket = () => {
     try {
-      const wsUrl = `wss://xjpoivlflcvagnfyogol.functions.supabase.co/whatsapp-connection/ws`;
+      const wsUrl = `wss://xjpoivlflcvagnfyogol.functions.supabase.co/whatsapp-connection`;
       wsRef.current = new WebSocket(wsUrl);
 
       wsRef.current.onopen = () => {
