@@ -15,9 +15,14 @@ export default function Auth() {
   const [isSignInLoading, setIsSignInLoading] = useState(false);
   const [isSignUpLoading, setIsSignUpLoading] = useState(false);
 
-  // Wait for auth to load completely before checking redirect
-  if (!loading && user && role) {
-    return <Navigate to={role === 'admin' ? '/admin' : '/client'} replace />;
+  // Redirect authenticated users with roles to their dashboard
+  if (!loading && user) {
+    if (role === 'admin') {
+      return <Navigate to="/admin" replace />;
+    } else if (role === 'client') {
+      return <Navigate to="/client" replace />;
+    }
+    // User is authenticated but has no role - stay on auth page
   }
 
   const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
