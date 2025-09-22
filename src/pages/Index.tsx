@@ -1,13 +1,16 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useAuth } from "@/hooks/useAuth";
 import HeroSection from "@/components/HeroSection";
 import Dashboard from "@/components/Dashboard";
 import WhatsAppConnection from "@/components/WhatsAppConnection";
-import { MessageSquare, LayoutDashboard, Smartphone, Users, Settings } from "lucide-react";
+import { MessageSquare, LayoutDashboard, Smartphone, Users, Settings, LogIn } from "lucide-react";
 
 const Index = () => {
   const [currentView, setCurrentView] = useState<'hero' | 'dashboard' | 'whatsapp' | 'groups'>('hero');
+  const { user, role } = useAuth();
 
   const navigation = [
     { id: 'hero', label: 'Accueil', icon: <MessageSquare className="h-4 w-4" /> },
@@ -76,6 +79,20 @@ const Index = () => {
                   {item.label}
                 </Button>
               ))}
+              {user && role ? (
+                <Button asChild>
+                  <Link to={role === 'admin' ? '/admin' : '/client'}>
+                    Dashboard
+                  </Link>
+                </Button>
+              ) : (
+                <Button asChild variant="outline">
+                  <Link to="/auth">
+                    <LogIn className="h-4 w-4 mr-2" />
+                    Connexion
+                  </Link>
+                </Button>
+              )}
             </div>
           </div>
         </div>
