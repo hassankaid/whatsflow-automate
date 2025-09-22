@@ -19,7 +19,7 @@ interface WhatsAppConnectionProps {
 }
 
 interface WhatsAppMessage {
-  type: 'qr' | 'connecting' | 'connected' | 'error';
+  type: 'qr' | 'connecting' | 'connected' | 'error' | 'initializing';
   qr?: string;
   message?: string;
   device?: {
@@ -90,16 +90,30 @@ const WhatsAppConnection = ({ onConnected }: WhatsAppConnectionProps = {}) => {
   };
 
   const handleWebSocketMessage = async (data: WhatsAppMessage) => {
+    console.log('Received WebSocket message:', data);
+    
     switch (data.type) {
       case 'qr':
+        console.log('Received QR code');
+        setConnectionStep('qr');
         if (data.qr) {
           await generateQRCodeFromData(data.qr);
         }
         break;
+      case 'initializing':
+        console.log('WhatsApp client initializing...');
+        setConnectionStep('qr');
+        toast({
+          title: "Initialisation",
+          description: data.message || "Initialisation du service WhatsApp...",
+        });
+        break;
       case 'connecting':
+        console.log('WhatsApp connecting...');
         setConnectionStep('connecting');
         break;
       case 'connected':
+        console.log('WhatsApp connected!');
         setConnectionStep('connected');
         if (data.device) {
           setDeviceInfo(data.device);
@@ -111,12 +125,16 @@ const WhatsAppConnection = ({ onConnected }: WhatsAppConnectionProps = {}) => {
         });
         break;
       case 'error':
+        console.error('WhatsApp error:', data.message);
+        setConnectionStep('qr');
         toast({
           title: "Erreur",
           description: data.message || 'Une erreur est survenue',
           variant: "destructive",
         });
         break;
+      default:
+        console.log('Unknown message type:', data.type);
     }
   };
 
