@@ -310,8 +310,8 @@ serve(async (req) => {
       const { action, data } = await req.json();
       
       // Forward request to Node.js bot server
-      // You'll need to configure the bot server URL
-      const botServerUrl = 'http://your-bot-server.com:3001';
+      // Replace with your actual bot server URL once deployed
+      const botServerUrl = 'http://localhost:3001'; // Change this to your server's URL
       
       const response = await fetch(`${botServerUrl}/${action}`, {
         method: 'POST',
