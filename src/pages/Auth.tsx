@@ -12,7 +12,8 @@ import { MessageSquare, Shield, Users } from 'lucide-react';
 export default function Auth() {
   const { user, role, signIn, signUp, loading } = useAuth();
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSignInLoading, setIsSignInLoading] = useState(false);
+  const [isSignUpLoading, setIsSignUpLoading] = useState(false);
 
   // Redirect if already authenticated
   if (user && role) {
@@ -21,7 +22,7 @@ export default function Auth() {
 
   const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setIsLoading(true);
+    setIsSignInLoading(true);
 
     const formData = new FormData(e.currentTarget);
     const email = formData.get('email') as string;
@@ -35,14 +36,19 @@ export default function Auth() {
         title: "Erreur de connexion",
         description: error.message
       });
+    } else {
+      toast({
+        title: "Connexion réussie",
+        description: "Redirection en cours..."
+      });
     }
 
-    setIsLoading(false);
+    setIsSignInLoading(false);
   };
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setIsLoading(true);
+    setIsSignUpLoading(true);
 
     const formData = new FormData(e.currentTarget);
     const email = formData.get('email') as string;
@@ -68,7 +74,7 @@ export default function Auth() {
       });
     }
 
-    setIsLoading(false);
+    setIsSignUpLoading(false);
   };
 
   if (loading) {
@@ -138,9 +144,9 @@ export default function Auth() {
                   <Button
                     type="submit"
                     className="w-full"
-                    disabled={isLoading}
+                    disabled={isSignInLoading}
                   >
-                    {isLoading ? "Connexion..." : "Se connecter"}
+                    {isSignInLoading ? "Connexion..." : "Se connecter"}
                   </Button>
                 </form>
               </TabsContent>
@@ -189,9 +195,9 @@ export default function Auth() {
                   <Button
                     type="submit"
                     className="w-full"
-                    disabled={isLoading}
+                    disabled={isSignUpLoading}
                   >
-                    {isLoading ? "Inscription..." : "S'inscrire"}
+                    {isSignUpLoading ? "Inscription..." : "S'inscrire"}
                   </Button>
                 </form>
               </TabsContent>
