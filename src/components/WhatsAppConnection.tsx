@@ -12,25 +12,116 @@ import {
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import QRCode from 'qrcode';
+import { useToast } from "./ui/use-toast";
 
 interface WhatsAppConnectionProps {
   onConnected?: () => void;
+}
+
+interface WhatsAppMessage {
+  type: 'qr' | 'connecting' | 'connected' | 'error';
+  qr?: string;
+  message?: string;
+  device?: {
+    name: string;
+    id: string;
+  };
+  timestamp?: number;
 }
 
 const WhatsAppConnection = ({ onConnected }: WhatsAppConnectionProps = {}) => {
   const [connectionStep, setConnectionStep] = useState<'qr' | 'connecting' | 'connected'>('qr');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
+  const [deviceInfo, setDeviceInfo] = useState<{name: string; id: string} | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const wsRef = useRef<WebSocket | null>(null);
+  const { toast } = useToast();
 
-  // Générer un QR code réel
-  const generateQRCode = async () => {
+  // Initialize WebSocket connection
+  useEffect(() => {
+    connectWebSocket();
+    return () => {
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+    };
+  }, []);
+
+  const connectWebSocket = () => {
     try {
-      // Simuler une session WhatsApp Web (en réalité, ceci viendrait de votre backend WhatsApp API)
-      const sessionId = Math.random().toString(36).substring(2, 15);
-      const timestamp = Date.now();
-      const qrData = `whatsapp://connect?session=${sessionId}&timestamp=${timestamp}&app=marketing`;
-      
+      const wsUrl = `wss://xjpoivlflcvagnfyogol.functions.supabase.co/whatsapp-connection/ws`;
+      wsRef.current = new WebSocket(wsUrl);
+
+      wsRef.current.onopen = () => {
+        console.log('WebSocket connected');
+        toast({
+          title: "Service connecté",
+          description: "Prêt à générer le QR code WhatsApp",
+        });
+      };
+
+      wsRef.current.onmessage = (event) => {
+        try {
+          const data: WhatsAppMessage = JSON.parse(event.data);
+          handleWebSocketMessage(data);
+        } catch (error) {
+          console.error('Error parsing WebSocket message:', error);
+        }
+      };
+
+      wsRef.current.onerror = (error) => {
+        console.error('WebSocket error:', error);
+        toast({
+          title: "Erreur de connexion",
+          description: "Impossible de se connecter au service WhatsApp",
+          variant: "destructive",
+        });
+      };
+
+      wsRef.current.onclose = () => {
+        console.log('WebSocket disconnected');
+        // Retry connection after 5 seconds
+        setTimeout(connectWebSocket, 5000);
+      };
+    } catch (error) {
+      console.error('Error connecting to WebSocket:', error);
+    }
+  };
+
+  const handleWebSocketMessage = async (data: WhatsAppMessage) => {
+    switch (data.type) {
+      case 'qr':
+        if (data.qr) {
+          await generateQRCodeFromData(data.qr);
+        }
+        break;
+      case 'connecting':
+        setConnectionStep('connecting');
+        break;
+      case 'connected':
+        setConnectionStep('connected');
+        if (data.device) {
+          setDeviceInfo(data.device);
+        }
+        onConnected?.();
+        toast({
+          title: "WhatsApp connecté",
+          description: `Connecté depuis ${data.device?.name || 'votre appareil'}`,
+        });
+        break;
+      case 'error':
+        toast({
+          title: "Erreur",
+          description: data.message || 'Une erreur est survenue',
+          variant: "destructive",
+        });
+        break;
+    }
+  };
+
+  const generateQRCodeFromData = async (qrData: string) => {
+    try {
       if (canvasRef.current) {
         await QRCode.toCanvas(canvasRef.current, qrData, {
           width: 200,
@@ -57,24 +148,18 @@ const WhatsAppConnection = ({ onConnected }: WhatsAppConnectionProps = {}) => {
     }
   };
 
-  useEffect(() => {
-    generateQRCode();
-  }, []);
-
   const handleRefreshQR = () => {
-    setIsRefreshing(true);
-    setTimeout(() => {
-      generateQRCode();
-      setIsRefreshing(false);
-    }, 1000);
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      setIsRefreshing(true);
+      wsRef.current.send(JSON.stringify({ type: 'refresh-qr' }));
+      setTimeout(() => setIsRefreshing(false), 1000);
+    }
   };
 
   const mockConnect = () => {
-    setConnectionStep('connecting');
-    setTimeout(() => {
-      setConnectionStep('connected');
-      onConnected?.();
-    }, 3000);
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ type: 'mock-connect' }));
+    }
   };
 
   return (
@@ -146,7 +231,9 @@ const WhatsAppConnection = ({ onConnected }: WhatsAppConnectionProps = {}) => {
                 <CheckCircle className="h-6 w-6 text-white" />
               </div>
               <h3 className="text-lg font-semibold mb-2 text-success">WhatsApp connecté !</h3>
-              <p className="text-muted-foreground mb-4">Votre compte est maintenant lié à la plateforme</p>
+              <p className="text-muted-foreground mb-4">
+                {deviceInfo ? `Connecté depuis ${deviceInfo.name}` : 'Votre compte est maintenant lié à la plateforme'}
+              </p>
               <Badge className="bg-success/10 text-success border-success/20">
                 Connexion active
               </Badge>
