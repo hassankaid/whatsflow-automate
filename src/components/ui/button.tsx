@@ -15,11 +15,14 @@ const buttonVariants = cva(
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
+        gradient: "bg-gradient-to-r from-flowmessage to-flowmessage-light text-white hover:from-flowmessage/90 hover:to-flowmessage-light/90",
+        success: "bg-success text-success-foreground hover:bg-success/90",
       },
-      size: {
+        size: {
         default: "h-10 px-4 py-2",
         sm: "h-9 rounded-md px-3",
         lg: "h-11 rounded-md px-8",
+        xl: "h-12 rounded-lg px-10 text-lg",
         icon: "h-10 w-10",
       },
     },

@@ -90,12 +90,12 @@ const WhatsAppConnection = () => {
 
                 {connectionStep === 'connected' && (
                   <div className="text-center py-8">
-                    <div className="h-12 w-12 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <div className="h-12 w-12 bg-success rounded-full flex items-center justify-center mx-auto mb-4">
                       <CheckCircle className="h-6 w-6 text-white" />
                     </div>
-                    <h3 className="text-lg font-semibold mb-2 text-green-500">Connecté avec succès !</h3>
+                    <h3 className="text-lg font-semibold mb-2 text-success">Connecté avec succès !</h3>
                     <p className="text-muted-foreground mb-4">Votre compte WhatsApp est maintenant connecté</p>
-                    <Badge className="bg-green-500/10 text-green-500 border-green-500/20">
+                    <Badge className="bg-success/10 text-success border-success/20">
                       +33 6 12 34 56 78
                     </Badge>
                   </div>
@@ -156,38 +156,38 @@ const WhatsAppConnection = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3 text-sm">
-                    <div className="flex items-start gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                      <span>Connexion chiffrée de bout en bout</span>
+                    <div className="space-y-3 text-sm">
+                      <div className="flex items-start gap-2">
+                        <CheckCircle className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                        <span>Connexion chiffrée de bout en bout</span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <CheckCircle className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                        <span>Aucun accès à vos messages personnels</span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <CheckCircle className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                        <span>Vous pouvez vous déconnecter à tout moment</span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <CheckCircle className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                        <span>Conformité RGPD garantie</span>
+                      </div>
                     </div>
-                    <div className="flex items-start gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                      <span>Aucun accès à vos messages personnels</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                      <span>Vous pouvez vous déconnecter à tout moment</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                      <span>Conformité RGPD garantie</span>
-                    </div>
-                  </div>
                 </CardContent>
               </Card>
 
               {/* Status */}
               {connectionStep === 'connected' && (
-                <Card className="border-green-500/20 bg-green-500/5">
+                <Card className="border-success/20 bg-success/5">
                   <CardContent className="p-4">
                     <div className="flex items-center gap-3">
-                      <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
+                      <div className="h-2 w-2 bg-success rounded-full animate-pulse"></div>
                       <div className="flex-1">
-                        <p className="font-medium text-green-500">WhatsApp connecté</p>
+                        <p className="font-medium text-success">WhatsApp connecté</p>
                         <p className="text-xs text-muted-foreground">Dernière synchronisation : maintenant</p>
                       </div>
-                      <Wifi className="h-4 w-4 text-green-500" />
+                      <Wifi className="h-4 w-4 text-success" />
                     </div>
                   </CardContent>
                 </Card>

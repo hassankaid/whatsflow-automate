@@ -27,21 +27,21 @@ const Dashboard = () => {
       value: "18",
       change: "+5",
       icon: <Clock className="h-5 w-5" />,
-      color: "text-blue-500"
+      color: "text-primary"
     },
     {
       title: "Groupes Connectés",
       value: "12",
       change: "+2",
       icon: <Users className="h-5 w-5" />,
-      color: "text-green-500"
+      color: "text-success"
     },
     {
       title: "Taux de Livraison",
       value: "98.2%",
       change: "+0.3%",
       icon: <CheckCircle className="h-5 w-5" />,
-      color: "text-emerald-500"
+      color: "text-success"
     }
   ];
 
@@ -74,10 +74,10 @@ const Dashboard = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "Livré": return "bg-green-500/10 text-green-500 border-green-500/20";
-      case "Programmé": return "bg-blue-500/10 text-blue-500 border-blue-500/20";
-      case "En cours": return "bg-yellow-500/10 text-yellow-500 border-yellow-500/20";
-      default: return "bg-gray-500/10 text-gray-500 border-gray-500/20";
+      case "Livré": return "bg-success/10 text-success border-success/20";
+      case "Programmé": return "bg-primary/10 text-primary border-primary/20";
+      case "En cours": return "bg-accent/10 text-accent border-accent/20";
+      default: return "bg-muted/10 text-muted-foreground border-muted/20";
     }
   };
 
@@ -95,7 +95,7 @@ const Dashboard = () => {
               <BarChart3 className="h-4 w-4 mr-2" />
               Analytics
             </Button>
-            <Button size="lg" className="bg-gradient-to-r from-primary to-whatsapp-light">
+            <Button variant="gradient" size="lg">
               <Plus className="h-4 w-4 mr-2" />
               Nouveau Message
             </Button>
@@ -111,7 +111,7 @@ const Dashboard = () => {
                   <div>
                     <p className="text-sm font-medium text-muted-foreground mb-1">{stat.title}</p>
                     <p className="text-2xl font-bold">{stat.value}</p>
-                    <p className="text-sm text-green-500 font-medium">{stat.change}</p>
+                    <p className="text-sm text-success font-medium">{stat.change}</p>
                   </div>
                   <div className={`p-3 rounded-lg bg-primary/10 ${stat.color}`}>
                     {stat.icon}
@@ -186,7 +186,7 @@ const Dashboard = () => {
             <Card className="border-border/50">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <div className="h-3 w-3 bg-green-500 rounded-full"></div>
+                  <div className="h-3 w-3 bg-success rounded-full"></div>
                   WhatsApp Status
                 </CardTitle>
               </CardHeader>
@@ -194,9 +194,9 @@ const Dashboard = () => {
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="text-sm">Connexion</span>
-                    <Badge className="bg-green-500/10 text-green-500 border-green-500/20">
-                      Connecté
-                    </Badge>
+                     <Badge className="bg-success/10 text-success border-success/20">
+                       Connecté
+                     </Badge>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm">Dernière sync</span>
