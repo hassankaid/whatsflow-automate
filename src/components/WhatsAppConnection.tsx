@@ -214,6 +214,23 @@ const WhatsAppConnection = ({ onConnected }: WhatsAppConnectionProps = {}) => {
                 </p>
               </div>
               
+              {/* Instructions pour le bot server */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 text-left">
+                <h4 className="font-semibold text-blue-800 mb-2">📋 Installation du Bot Server</h4>
+                <div className="text-sm text-blue-700 space-y-2">
+                  <p><strong>1.</strong> Téléchargez le dossier <code>whatsapp-bot/</code></p>
+                  <p><strong>2.</strong> Installez Node.js sur votre serveur/ordinateur</p>
+                  <p><strong>3.</strong> Exécutez :</p>
+                  <div className="bg-blue-100 p-2 rounded font-mono text-xs">
+                    cd whatsapp-bot<br/>
+                    npm install<br/>
+                    npm start
+                  </div>
+                  <p><strong>4.</strong> Scannez le QR code qui apparaît dans le terminal</p>
+                  <p className="text-blue-600">⚡ Une fois connecté, ce QR code fonctionnera vraiment !</p>
+                </div>
+              </div>
+              
               <div className="space-y-3">
                 <Button 
                   onClick={handleRefreshQR}

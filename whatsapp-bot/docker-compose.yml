@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  whatsapp-bot:
+    build: .
+    ports:
+      - "3001:3001"
+      - "8080:8080"
+    volumes:
+      - ./session:/app/.wwebjs_auth
+    environment:
+      - NODE_ENV=production
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

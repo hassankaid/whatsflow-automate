@@ -260,16 +260,80 @@ serve(async (req) => {
     return response;
   }
 
+  // Webhook endpoint to receive data from Node.js bot server
+  if (req.method === 'POST' && url.pathname === '/webhook') {
+    try {
+      const { type, data, timestamp } = await req.json();
+      console.log('Received webhook from bot server:', { type, data });
+      
+      // Broadcast to all connected WebSocket clients
+      connections.forEach((socket, id) => {
+        try {
+          socket.send(JSON.stringify({
+            type,
+            ...data,
+            timestamp: timestamp || Date.now()
+          }));
+        } catch (error) {
+          console.error(`Error sending to connection ${id}:`, error);
+          connections.delete(id);
+        }
+      });
+      
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    } catch (error) {
+      console.error('Webhook error:', error);
+      return new Response(JSON.stringify({ error: error.message }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+  }
+
   // Regular HTTP endpoints
   if (req.method === 'GET' && url.pathname === '/status') {
     return new Response(JSON.stringify({ 
       status: 'running',
       whatsapp_ready: isWhatsAppReady,
       connections: connections.size,
+      bot_server_connected: true, // Assuming bot server is running
       timestamp: Date.now()
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
+  }
+
+  if (req.method === 'POST' && url.pathname === '/send-to-bot') {
+    try {
+      const { action, data } = await req.json();
+      
+      // Forward request to Node.js bot server
+      // You'll need to configure the bot server URL
+      const botServerUrl = 'http://your-bot-server.com:3001';
+      
+      const response = await fetch(`${botServerUrl}/${action}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      
+      const result = await response.json();
+      
+      return new Response(JSON.stringify(result), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    } catch (error) {
+      console.error('Error communicating with bot server:', error);
+      return new Response(JSON.stringify({ 
+        error: 'Bot server communication failed',
+        message: error.message 
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
   }
 
   if (req.method === 'POST' && url.pathname === '/generate-qr') {
