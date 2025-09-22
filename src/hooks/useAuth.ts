@@ -19,7 +19,7 @@ export const useAuth = () => {
     loading: true,
   });
 
-  const fetchUserRole = async (userId: string) => {
+  const fetchUserRole = async (userId: string): Promise<AppRole> => {
     try {
       console.log('Fetching role for user:', userId);
       const { data: roleData, error } = await supabase
@@ -33,10 +33,10 @@ export const useAuth = () => {
         return null;
       }
       
-      console.log('Role data:', roleData);
-      return roleData?.role || null;
+      console.log('Role data received:', roleData);
+      return (roleData?.role as AppRole) || null;
     } catch (error) {
-      console.error('Error in fetchUserRole:', error);
+      console.error('Exception in fetchUserRole:', error);
       return null;
     }
   };
@@ -45,25 +45,41 @@ export const useAuth = () => {
     let mounted = true;
 
     const handleAuthStateChange = async (event: string, session: Session | null) => {
-      console.log('Auth state change:', event, session?.user?.id);
+      console.log('🔄 Auth state change:', event, session?.user?.email);
       
-      if (!mounted) return;
+      if (!mounted) {
+        console.log('⚠️ Component unmounted, skipping update');
+        return;
+      }
 
-      if (session?.user) {
-        const role = await fetchUserRole(session.user.id);
-        
-        if (mounted) {
-          console.log('Setting auth state with role:', role);
-          setAuthState({
-            user: session.user,
-            session,
-            role,
-            loading: false,
-          });
+      try {
+        if (session?.user) {
+          console.log('👤 User session found, fetching role...');
+          const role = await fetchUserRole(session.user.id);
+          
+          if (mounted) {
+            console.log('✅ Setting auth state - User:', session.user.email, 'Role:', role);
+            setAuthState({
+              user: session.user,
+              session,
+              role,
+              loading: false,
+            });
+          }
+        } else {
+          console.log('❌ No session, setting to logged out state');
+          if (mounted) {
+            setAuthState({
+              user: null,
+              session: null,
+              role: null,
+              loading: false,
+            });
+          }
         }
-      } else {
+      } catch (error) {
+        console.error('❌ Error in handleAuthStateChange:', error);
         if (mounted) {
-          console.log('Setting auth state to null');
           setAuthState({
             user: null,
             session: null,
@@ -74,39 +90,42 @@ export const useAuth = () => {
       }
     };
 
-    // Check for existing session first
-    const initializeAuth = async () => {
+    const initAuth = async () => {
+      console.log('🚀 Initializing auth...');
+      
       try {
-        console.log('Initializing auth...');
+        // Get initial session
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
-          console.error('Error getting session:', error);
-          setAuthState(prev => ({ ...prev, loading: false }));
+          console.error('❌ Error getting session:', error);
+          if (mounted) {
+            setAuthState(prev => ({ ...prev, loading: false }));
+          }
           return;
         }
 
+        console.log('📋 Initial session check complete');
         await handleAuthStateChange('INITIAL_SESSION', session);
-        
-        // Set up auth state listener after initial session check
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthStateChange);
-        
-        return () => {
-          mounted = false;
-          subscription.unsubscribe();
-        };
+
       } catch (error) {
-        console.error('Error in initializeAuth:', error);
+        console.error('❌ Error in initAuth:', error);
         if (mounted) {
           setAuthState(prev => ({ ...prev, loading: false }));
         }
       }
     };
 
-    initializeAuth();
+    // Initialize and set up listener
+    initAuth();
+
+    // Set up auth change listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthStateChange);
 
     return () => {
+      console.log('🧹 Cleaning up auth hook');
       mounted = false;
+      subscription.unsubscribe();
     };
   }, []);
 
