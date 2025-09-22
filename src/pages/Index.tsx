@@ -47,27 +47,30 @@ const Index = () => {
   return (
     <div className="min-h-screen">
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border/50">
+      <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-white/10">
         <div className="container mx-auto px-6">
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-flowmessage to-flowmessage-light rounded-lg flex items-center justify-center">
-                <MessageSquare className="h-4 w-4 text-white" />
+            <div className="flex items-center gap-3">
+              <div className="relative w-10 h-10 bg-gradient-to-r from-flowmessage to-flowmessage-light rounded-xl flex items-center justify-center shadow-lg animate-glow">
+                <MessageSquare className="h-5 w-5 text-white" />
+                <div className="absolute inset-0 bg-gradient-to-r from-flowmessage to-flowmessage-light rounded-xl blur-sm opacity-50 -z-10"></div>
               </div>
-              <span className="font-bold text-lg">FlowMessage</span>
+              <span className="font-bold text-xl bg-gradient-to-r from-flowmessage to-flowmessage-light bg-clip-text text-transparent">
+                FlowMessage
+              </span>
             </div>
             
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               {navigation.map((item) => (
                 <Button
                   key={item.id}
                   variant={currentView === item.id ? "default" : "ghost"}
                   size="sm"
                   onClick={() => setCurrentView(item.id as any)}
-                  className={`flex items-center gap-2 ${
+                  className={`flex items-center gap-2 transition-all duration-300 ${
                     currentView === item.id 
-                      ? "bg-gradient-to-r from-flowmessage to-flowmessage-light text-white" 
-                      : ""
+                      ? "bg-gradient-to-r from-flowmessage to-flowmessage-light text-white shadow-lg animate-glow" 
+                      : "hover:glass hover:text-flowmessage"
                   }`}
                 >
                   {item.icon}

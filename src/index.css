@@ -17,8 +17,8 @@ All colors MUST be HSL.
     --popover: 240 10% 3.9%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 142 76% 36%;
-    --primary-foreground: 355 7% 97%;
+    --primary: 195 100% 50%;
+    --primary-foreground: 0 0% 100%;
 
     --secondary: 240 3.7% 15.9%;
     --secondary-foreground: 0 0% 98%;
@@ -26,29 +26,36 @@ All colors MUST be HSL.
     --muted: 240 3.7% 15.9%;
     --muted-foreground: 240 5% 64.9%;
 
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
+    --accent: 328 100% 54%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
-    --ring: 142 76% 36%;
+    --ring: 195 100% 50%;
 
     --flowmessage: 195 100% 50%;
     --flowmessage-dark: 195 100% 45%;
     --flowmessage-light: 328 100% 54%;
     
-    --success: 142 76% 36%;
-    --success-foreground: 355 7% 97%;
+    --success: 195 100% 50%;
+    --success-foreground: 0 0% 100%;
     
     --gradient-primary: linear-gradient(135deg, hsl(195 100% 50%), hsl(328 100% 54%));
     --gradient-secondary: linear-gradient(135deg, hsl(240 3.7% 15.9%), hsl(240 3.7% 20%));
     --gradient-hero: linear-gradient(135deg, hsl(195 100% 50%), hsl(328 100% 54%));
+    --gradient-glass: linear-gradient(135deg, rgba(195, 255, 255, 0.1), rgba(255, 20, 147, 0.1));
+    --gradient-card: linear-gradient(135deg, hsl(240 10% 3.9%), hsl(240 8% 6%));
     
     --shadow-glow: 0 0 40px hsl(195 100% 50% / 0.3);
     --shadow-elegant: 0 10px 30px -10px hsl(0 0% 0% / 0.3);
+    --shadow-modern: 0 25px 50px -12px hsl(195 100% 50% / 0.25);
+    --shadow-glass: 0 8px 32px 0 rgba(195, 255, 255, 0.37);
+
+    --blur-glass: blur(10px);
+    --border-glass: 1px solid rgba(255, 255, 255, 0.18);
 
     --radius: 0.5rem;
 
@@ -115,5 +122,40 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    background: linear-gradient(135deg, hsl(240 10% 3.9%), hsl(240 8% 6%));
+    min-height: 100vh;
+  }
+
+  /* Glass morphism utilities */
+  .glass {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: var(--blur-glass);
+    border: var(--border-glass);
+  }
+
+  .glass-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+    backdrop-filter: var(--blur-glass);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: var(--shadow-glass);
+  }
+
+  /* Modern animations */
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .animate-glow {
+    animation: glow 2s ease-in-out infinite alternate;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-20px); }
+  }
+
+  @keyframes glow {
+    from { box-shadow: var(--shadow-glow); }
+    to { box-shadow: var(--shadow-modern); }
   }
 }
