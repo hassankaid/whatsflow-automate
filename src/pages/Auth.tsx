@@ -15,8 +15,8 @@ export default function Auth() {
   const [isSignInLoading, setIsSignInLoading] = useState(false);
   const [isSignUpLoading, setIsSignUpLoading] = useState(false);
 
-  // Redirect if already authenticated
-  if (user && role) {
+  // Wait for auth to load completely before checking redirect
+  if (!loading && user && role) {
     return <Navigate to={role === 'admin' ? '/admin' : '/client'} replace />;
   }
 
