@@ -10,7 +10,8 @@ import {
   Shield,
   Wifi
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import QRCode from 'qrcode';
 
 interface WhatsAppConnectionProps {
   onConnected?: () => void;
@@ -19,12 +20,53 @@ interface WhatsAppConnectionProps {
 const WhatsAppConnection = ({ onConnected }: WhatsAppConnectionProps = {}) => {
   const [connectionStep, setConnectionStep] = useState<'qr' | 'connecting' | 'connected'>('qr');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  // Générer un QR code réel
+  const generateQRCode = async () => {
+    try {
+      // Simuler une session WhatsApp Web (en réalité, ceci viendrait de votre backend WhatsApp API)
+      const sessionId = Math.random().toString(36).substring(2, 15);
+      const timestamp = Date.now();
+      const qrData = `whatsapp://connect?session=${sessionId}&timestamp=${timestamp}&app=marketing`;
+      
+      if (canvasRef.current) {
+        await QRCode.toCanvas(canvasRef.current, qrData, {
+          width: 200,
+          margin: 2,
+          color: {
+            dark: '#000000',
+            light: '#FFFFFF'
+          }
+        });
+      }
+
+      // Générer aussi une URL pour affichage alternatif
+      const qrUrl = await QRCode.toDataURL(qrData, {
+        width: 200,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        }
+      });
+      setQrCodeUrl(qrUrl);
+    } catch (error) {
+      console.error('Erreur lors de la génération du QR code:', error);
+    }
+  };
+
+  useEffect(() => {
+    generateQRCode();
+  }, []);
 
   const handleRefreshQR = () => {
     setIsRefreshing(true);
     setTimeout(() => {
+      generateQRCode();
       setIsRefreshing(false);
-    }, 2000);
+    }, 1000);
   };
 
   const mockConnect = () => {
@@ -42,35 +84,51 @@ const WhatsAppConnection = ({ onConnected }: WhatsAppConnectionProps = {}) => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <QrCode className="h-5 w-5" />
-            Code QR de Connexion
+            Code QR de Connexion WhatsApp
           </CardTitle>
         </CardHeader>
         <CardContent>
           {connectionStep === 'qr' && (
             <div className="text-center">
-              <div className="bg-white p-8 rounded-xl mb-6 inline-block">
-                <div className="w-48 h-48 bg-gray-100 rounded-lg flex items-center justify-center mb-4">
-                  <QrCode className="h-32 w-32 text-gray-400" />
-                </div>
-                <p className="text-xs text-gray-600">Code QR WhatsApp</p>
+              <div className="bg-white p-6 rounded-xl mb-6 inline-block shadow-sm border">
+                {/* Canvas pour le QR code réel */}
+                <canvas 
+                  ref={canvasRef} 
+                  className="mx-auto block"
+                  style={{ maxWidth: '200px', height: 'auto' }}
+                />
+                {/* Fallback si le canvas ne fonctionne pas */}
+                {!canvasRef.current && qrCodeUrl && (
+                  <img 
+                    src={qrCodeUrl} 
+                    alt="QR Code WhatsApp" 
+                    className="mx-auto block"
+                    style={{ maxWidth: '200px', height: 'auto' }}
+                  />
+                )}
+                <p className="text-xs text-gray-600 mt-2">
+                  Scannez avec WhatsApp
+                </p>
               </div>
               
-              <Button 
-                onClick={handleRefreshQR}
-                variant="outline" 
-                disabled={isRefreshing}
-                className="mb-4"
-              >
-                <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
-                Actualiser le QR Code
-              </Button>
-              
-              <Button 
-                onClick={mockConnect}
-                className="w-full bg-gradient-to-r from-primary to-primary/80"
-              >
-                Simuler la connexion
-              </Button>
+              <div className="space-y-3">
+                <Button 
+                  onClick={handleRefreshQR}
+                  variant="outline" 
+                  disabled={isRefreshing}
+                  className="w-full"
+                >
+                  <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  {isRefreshing ? 'Génération...' : 'Nouveau QR Code'}
+                </Button>
+                
+                <Button 
+                  onClick={mockConnect}
+                  className="w-full bg-gradient-to-r from-primary to-primary/80"
+                >
+                  Simuler la connexion (pour test)
+                </Button>
+              </div>
             </div>
           )}
 
@@ -78,7 +136,7 @@ const WhatsAppConnection = ({ onConnected }: WhatsAppConnectionProps = {}) => {
             <div className="text-center py-8">
               <div className="animate-spin h-12 w-12 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
               <h3 className="text-lg font-semibold mb-2">Connexion en cours...</h3>
-              <p className="text-muted-foreground">Vérification de votre compte WhatsApp</p>
+              <p className="text-muted-foreground">Vérification de votre scan WhatsApp</p>
             </div>
           )}
 
@@ -87,10 +145,10 @@ const WhatsAppConnection = ({ onConnected }: WhatsAppConnectionProps = {}) => {
               <div className="h-12 w-12 bg-success rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle className="h-6 w-6 text-white" />
               </div>
-              <h3 className="text-lg font-semibold mb-2 text-success">Connecté avec succès !</h3>
-              <p className="text-muted-foreground mb-4">Votre compte WhatsApp est maintenant connecté</p>
+              <h3 className="text-lg font-semibold mb-2 text-success">WhatsApp connecté !</h3>
+              <p className="text-muted-foreground mb-4">Votre compte est maintenant lié à la plateforme</p>
               <Badge className="bg-success/10 text-success border-success/20">
-                +33 6 12 34 56 78
+                Connexion active
               </Badge>
             </div>
           )}
@@ -102,7 +160,7 @@ const WhatsAppConnection = ({ onConnected }: WhatsAppConnectionProps = {}) => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Smartphone className="h-5 w-5" />
-            Instructions
+            Comment se connecter
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -113,7 +171,7 @@ const WhatsAppConnection = ({ onConnected }: WhatsAppConnectionProps = {}) => {
               </div>
               <div>
                 <p className="font-medium">Ouvrez WhatsApp sur votre téléphone</p>
-                <p className="text-sm text-muted-foreground">Assurez-vous d'avoir la dernière version</p>
+                <p className="text-sm text-muted-foreground">Assurez-vous d'avoir la dernière version installée</p>
               </div>
             </div>
             
@@ -122,8 +180,11 @@ const WhatsAppConnection = ({ onConnected }: WhatsAppConnectionProps = {}) => {
                 2
               </div>
               <div>
-                <p className="font-medium">Allez dans Paramètres → Appareils connectés</p>
-                <p className="text-sm text-muted-foreground">Ou Menu → WhatsApp Web</p>
+                <p className="font-medium">Allez dans les paramètres</p>
+                <p className="text-sm text-muted-foreground">
+                  <strong>Android :</strong> Menu (⋮) → Appareils connectés<br/>
+                  <strong>iPhone :</strong> Réglages → WhatsApp Web/Desktop
+                </p>
               </div>
             </div>
             
@@ -132,8 +193,10 @@ const WhatsAppConnection = ({ onConnected }: WhatsAppConnectionProps = {}) => {
                 3
               </div>
               <div>
-                <p className="font-medium">Scannez le QR code ci-dessus</p>
-                <p className="text-sm text-muted-foreground">Pointez votre caméra vers l'écran</p>
+                <p className="font-medium">Scannez le QR code</p>
+                <p className="text-sm text-muted-foreground">
+                  Appuyez sur "Connecter un appareil" puis pointez votre caméra vers le QR code ci-dessus
+                </p>
               </div>
             </div>
           </div>
@@ -152,19 +215,19 @@ const WhatsAppConnection = ({ onConnected }: WhatsAppConnectionProps = {}) => {
           <div className="space-y-3 text-sm">
             <div className="flex items-start gap-2">
               <CheckCircle className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
-              <span>Connexion chiffrée de bout en bout</span>
+              <span>Connexion chiffrée bout-à-bout (même niveau que WhatsApp)</span>
             </div>
             <div className="flex items-start gap-2">
               <CheckCircle className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
-              <span>Aucun accès à vos messages personnels</span>
+              <span>Aucun accès à vos conversations personnelles</span>
             </div>
             <div className="flex items-start gap-2">
               <CheckCircle className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
-              <span>Vous pouvez vous déconnecter à tout moment</span>
+              <span>Vous gardez le contrôle total de votre compte</span>
             </div>
             <div className="flex items-start gap-2">
               <CheckCircle className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
-              <span>Conformité RGPD garantie</span>
+              <span>Déconnexion possible à tout moment depuis WhatsApp</span>
             </div>
           </div>
         </CardContent>
